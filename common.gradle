@@ -4,6 +4,7 @@
 
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'eclipse'
 
 //String jmeVersion = '3.0.10'
 //String jmeVersion = rootProject.version;
@@ -11,7 +12,7 @@ apply plugin: 'maven'
 String mavenGroupId = 'com.jme3'
 String mavenVersion = jmeVersion + '-' + jmeVersionTag //'-SNAPSHOT'
 
-sourceCompatibility = '1.5'
+sourceCompatibility = '1.7'
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 repositories {
@@ -81,4 +82,11 @@ task createFolders(description: 'Creates the source folders if they do not exist
 //            srcDir.mkdirs()
 //        }
 //    }
+}
+
+
+eclipse {
+  classpath {
+	defaultOutputDir = file('build')
+  }
 }

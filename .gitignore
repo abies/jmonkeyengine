@@ -78,3 +78,6 @@
 /sdk/jme3-core/nbproject/private/
 /.nb-gradle/profiles/private/
 /build/tmp/mergedJavadoc/
+*.project
+*.classpath
+*.prefs
