@@ -799,19 +799,8 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
                 continue;
             }
 
-            if (isFirstLight) {
-                // set ambient color for first light only
-                ambientColor.setValue(VarType.Vector4, getAmbientColor(lightList));
-                isFirstLight = false;
-                isSecondLight = true;
-            } else if (isSecondLight) {
-                ambientColor.setValue(VarType.Vector4, ColorRGBA.Black);
-                // apply additive blending for 2nd and future lights
-                r.applyRenderState(additiveLight);
-                isSecondLight = false;
-            }
-
             TempVars vars = TempVars.get();
+            try {
             Quaternion tmpLightDirection = vars.quat1;
             Quaternion tmpLightPosition = vars.quat2;
             ColorRGBA tmpLightColor = vars.color;
@@ -839,6 +828,10 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
                 case Point:
                     PointLight pl = (PointLight) l;
                     Vector3f pos = pl.getPosition();
+                    if ( g.getWorldBound().distanceToEdge(pos) > pl.getRadius() ) {
+                    	continue;
+                    }
+                    
                     float invRadius = pl.getInvRadius();
 
                     tmpLightPosition.set(pos.getX(), pos.getY(), pos.getZ(), invRadius);
@@ -869,7 +862,23 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
                 default:
                     throw new UnsupportedOperationException("Unknown type of light: " + l.getType());
             }
-            vars.release();
+            
+
+            if (isFirstLight) {
+                // set ambient color for first light only
+                ambientColor.setValue(VarType.Vector4, getAmbientColor(lightList));
+                isFirstLight = false;
+                isSecondLight = true;
+            } else if (isSecondLight) {
+                ambientColor.setValue(VarType.Vector4, ColorRGBA.Black);
+                // apply additive blending for 2nd and future lights
+                r.applyRenderState(additiveLight);
+                isSecondLight = false;
+            }
+
+            } finally {
+            	vars.release();
+            }
             r.setShader(shader);
             renderMeshFromGeometry(r, g);
         }
