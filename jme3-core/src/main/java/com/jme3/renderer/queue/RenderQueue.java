@@ -45,12 +45,9 @@ import com.jme3.scene.Spatial;
  */
 public class RenderQueue {
 
-    private GeometryList opaqueList;
-    private GeometryList guiList;
-    private GeometryList transparentList;
-    private GeometryList translucentList;
-    private GeometryList skyList;
-    private GeometryList shadowRecv;
+	private GeometryList[] buckets = new GeometryList[Bucket.values().length];
+	
+	private GeometryList shadowRecv;
     private GeometryList shadowCast;
 
     /**
@@ -58,11 +55,12 @@ public class RenderQueue {
      * are used for all {@link GeometryList geometry lists}.
      */
     public RenderQueue() {
-        this.opaqueList = new GeometryList(new OpaqueComparator());
-        this.guiList = new GeometryList(new GuiComparator());
-        this.transparentList = new GeometryList(new TransparentComparator());
-        this.translucentList = new GeometryList(new TransparentComparator());
-        this.skyList = new GeometryList(new NullComparator());
+    	this.buckets[Bucket.Deferred.ordinal()] = new GeometryList(new OpaqueComparator());
+    	this.buckets[Bucket.Opaque.ordinal()] = new GeometryList(new OpaqueComparator());
+    	this.buckets[Bucket.Gui.ordinal()] = new GeometryList(new GuiComparator());
+    	this.buckets[Bucket.Transparent.ordinal()] = new GeometryList(new TransparentComparator());
+    	this.buckets[Bucket.Translucent.ordinal()] = new GeometryList(new TransparentComparator());
+    	this.buckets[Bucket.Sky.ordinal()] = new GeometryList(new NullComparator());
         this.shadowRecv = new GeometryList(new OpaqueComparator());
         this.shadowCast = new GeometryList(new OpaqueComparator());
     }
@@ -76,6 +74,9 @@ public class RenderQueue {
      * via {@link Spatial#setQueueBucket(com.jme3.renderer.queue.RenderQueue.Bucket) }.
      */
     public enum Bucket {
+    	
+    	Deferred,
+    	
         /**
          * The renderer will try to find the optimal order for rendering all 
          * objects using this mode.
@@ -187,25 +188,7 @@ public class RenderQueue {
      *                     front based on their Z values.
      */
     public void setGeometryComparator(Bucket bucket, GeometryComparator c) {
-        switch (bucket) {
-            case Gui:
-                guiList = new GeometryList(c);
-                break;
-            case Opaque:
-                opaqueList = new GeometryList(c);
-                break;
-            case Sky:
-                skyList = new GeometryList(c);
-                break;
-            case Transparent:
-                transparentList = new GeometryList(c);
-                break;
-            case Translucent:
-                translucentList = new GeometryList(c);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unknown bucket type: " + bucket);
-        }
+    	buckets[bucket.ordinal()] = new GeometryList(c);
     }
 
     /**
@@ -213,20 +196,7 @@ public class RenderQueue {
      *  one of Gui, Opaque, Sky, Transparent, or Translucent.
      */
     public GeometryComparator getGeometryComparator(Bucket bucket) {
-        switch (bucket) {
-            case Gui:
-                return guiList.getComparator();
-            case Opaque:
-                return opaqueList.getComparator();
-            case Sky:
-                return skyList.getComparator();
-            case Transparent:
-                return transparentList.getComparator();
-            case Translucent:
-                return translucentList.getComparator();
-            default:
-                throw new UnsupportedOperationException("Unknown bucket type: " + bucket);
-        }
+    	return buckets[bucket.ordinal()].getComparator();
     }
 
     /**
@@ -274,25 +244,7 @@ public class RenderQueue {
      * {@link Geometry#getQueueBucket() }.
      */
     public void addToQueue(Geometry g, Bucket bucket) {
-        switch (bucket) {
-            case Gui:
-                guiList.add(g);
-                break;
-            case Opaque:
-                opaqueList.add(g);
-                break;
-            case Sky:
-                skyList.add(g);
-                break;
-            case Transparent:
-                transparentList.add(g);
-                break;
-            case Translucent:
-                translucentList.add(g);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unknown bucket type: " + bucket);
-        }
+    	buckets[bucket.ordinal()].add(g);
     }
 
     /**
@@ -345,20 +297,7 @@ public class RenderQueue {
     }
 
     public boolean isQueueEmpty(Bucket bucket) {
-        switch (bucket) {
-            case Gui:
-                return guiList.size() == 0;
-            case Opaque:
-                return opaqueList.size() == 0;
-            case Sky:
-                return skyList.size() == 0;
-            case Transparent:
-                return transparentList.size() == 0;
-            case Translucent:
-                return translucentList.size() == 0;
-            default:
-                throw new UnsupportedOperationException("Unsupported bucket type: " + bucket);
-        }
+    	return buckets[bucket.ordinal()].size() == 0;
     }
 
     public void renderQueue(Bucket bucket, RenderManager rm, Camera cam) {
@@ -366,34 +305,15 @@ public class RenderQueue {
     }
 
     public void renderQueue(Bucket bucket, RenderManager rm, Camera cam, boolean clear) {
-        switch (bucket) {
-            case Gui:
-                renderGeometryList(guiList, rm, cam, clear);
-                break;
-            case Opaque:
-                renderGeometryList(opaqueList, rm, cam, clear);
-                break;
-            case Sky:
-                renderGeometryList(skyList, rm, cam, clear);
-                break;
-            case Transparent:
-                renderGeometryList(transparentList, rm, cam, clear);
-                break;
-            case Translucent:
-                renderGeometryList(translucentList, rm, cam, clear);
-                break;
-
-            default:
-                throw new UnsupportedOperationException("Unsupported bucket type: " + bucket);
-        }
+    	renderGeometryList(buckets[bucket.ordinal()], rm, cam, clear);
     }
 
     public void clear() {
-        opaqueList.clear();
-        guiList.clear();
-        transparentList.clear();
-        translucentList.clear();
-        skyList.clear();
+    	for ( GeometryList list : buckets ) {
+    		if ( list != null ) {
+    			list.clear();
+    		}
+    	}
         shadowCast.clear();
         shadowRecv.clear();
     }
