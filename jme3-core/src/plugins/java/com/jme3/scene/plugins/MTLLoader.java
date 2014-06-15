@@ -146,11 +146,14 @@ public class MTLLoader implements AssetLoader {
             if (alphaMap != null)    material.setTexture("AlphaMap", alphaMap);
         }
         
+        
+        
         if (transparent){
             material.setTransparent(true);
             material.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
             material.getAdditionalRenderState().setAlphaTest(true);
             material.getAdditionalRenderState().setAlphaFallOff(0.01f);
+            material.setFloat("AlphaDiscardThreshold",0.01f);
         }
         
         matList.put(matName, material);
@@ -219,9 +222,9 @@ public class MTLLoader implements AssetLoader {
                 // Ignore Ns 0 instead of setting it
             }
             
-        }else if (cmd.equals("d") || cmd.equals("tr")){
+        }else if (cmd.equals("d") /*|| cmd.equals("tr")*/){
             float tempAlpha = scan.nextFloat();
-            if (tempAlpha != 0){
+            if (tempAlpha != 1.0){
                 alpha = tempAlpha;
                 transparent = true;
             }
