@@ -132,6 +132,9 @@ MaterialDef Phong Lighting {
         // For hardware skinning
         Int NumberOfBones
         Matrix4Array BoneMatrices
+        
+        Texture2D DiffLightBuf;
+        Texture2D SpecLightBuf;
     }
 
     Technique {
@@ -349,5 +352,54 @@ MaterialDef Phong Lighting {
             NUM_BONES : NumberOfBones
         }
     }
+    
+    Technique DLBasePass {
 
+        VertexShader GLSL100:   net/virtualmat/deferred/MeshBasePass.vert
+        FragmentShader GLSL100: net/virtualmat/deferred/MeshBasePass.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldViewMatrix
+            NormalMatrix
+            WorldMatrix
+        }
+
+        Defines {
+            DIFFUSEMAP : DiffuseMap
+            NORMALMAP : NormalMap
+            PARALLAXMAP : ParallaxMap
+            NORMALMAP_PARALLAX : PackedNormalParallax
+            STEEP_PARALLAX : SteepParallax
+            ALPHAMAP : AlphaMap
+            DISCARD_ALPHA : AlphaDiscardThreshold
+        }
+    }
+    
+    Technique DLComposePass {
+
+        VertexShader GLSL100:   net/virtualmat/deferred/MeshComposePass.vert
+        FragmentShader GLSL150: net/virtualmat/deferred/MeshComposePass.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldViewMatrix
+            NormalMatrix
+            WorldMatrix
+            Resolution
+        }
+
+        Defines {
+            DIFFUSEMAP : DiffuseMap
+            NORMALMAP : NormalMap
+            SPECULARMAP: SpecularMap
+            PARALLAXMAP : ParallaxMap
+            NORMALMAP_PARALLAX : PackedNormalParallax
+            STEEP_PARALLAX : SteepParallax
+            MATERIAL_COLORS : UseMaterialColors
+			ALPHAMAP : AlphaMap
+            DISCARD_ALPHA : AlphaDiscardThreshold
+        }
+    }
+    
 }
