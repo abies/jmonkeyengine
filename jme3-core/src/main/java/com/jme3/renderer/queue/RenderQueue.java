@@ -264,6 +264,10 @@ public class RenderQueue {
                 throw new IllegalArgumentException("Only Cast or Receive are allowed");
         }
     }
+    
+    public GeometryList getBucketContent(Bucket bucket) {
+    	return buckets[bucket.ordinal()];
+    }
 
     private void renderGeometryList(GeometryList list, RenderManager rm, Camera cam, boolean clear) {
         list.setCamera(cam); // select camera for sorting
