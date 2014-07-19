@@ -132,11 +132,12 @@ MaterialDef Phong Lighting {
         // For hardware skinning
         Int NumberOfBones
         Matrix4Array BoneMatrices
-        
+        Boolean UseInstancing
+
         Texture2D DiffLightBuf
         Texture2D SpecLightBuf
-        Float Reflective : 0
-    }
+        Float Reflective : 0    
+	}
 
     Technique {
 
@@ -152,6 +153,7 @@ MaterialDef Phong Lighting {
             ViewMatrix
             CameraPosition
             WorldMatrix
+            ViewProjectionMatrix            
         }
 
         Defines {
@@ -181,6 +183,8 @@ MaterialDef Phong Lighting {
             SPHERE_MAP : SphereMap  
 
             NUM_BONES : NumberOfBones
+                        
+            INSTANCING : UseInstancing
         }
     }
 
@@ -192,12 +196,15 @@ MaterialDef Phong Lighting {
         WorldParameters {
             WorldViewProjectionMatrix
             WorldViewMatrix
+            ViewProjectionMatrix
+            ViewMatrix
         }
 
         Defines {
             COLOR_MAP : ColorMap
             DISCARD_ALPHA : AlphaDiscardThreshold
             NUM_BONES : NumberOfBones
+            INSTANCING : UseInstancing
         }
 
         ForcedRenderState {
@@ -218,6 +225,8 @@ MaterialDef Phong Lighting {
         WorldParameters {
             WorldViewProjectionMatrix
             WorldMatrix
+            ViewProjectionMatrix
+            ViewMatrix
         }
 
         Defines {
@@ -231,6 +240,7 @@ MaterialDef Phong Lighting {
             PSSM : Splits
             POINTLIGHT : LightViewProjectionMatrix5
             NUM_BONES : NumberOfBones
+            INSTANCING : UseInstancing
         }
 
         ForcedRenderState {
@@ -247,6 +257,8 @@ MaterialDef Phong Lighting {
         WorldParameters {
             WorldViewProjectionMatrix
             WorldMatrix
+            ViewProjectionMatrix
+            ViewMatrix
         }
 
         Defines {
@@ -260,6 +272,7 @@ MaterialDef Phong Lighting {
             PSSM : Splits
             POINTLIGHT : LightViewProjectionMatrix5
             NUM_BONES : NumberOfBones
+            INSTANCING : UseInstancing
         }
 
         ForcedRenderState {
@@ -278,11 +291,14 @@ MaterialDef Phong Lighting {
             WorldViewProjectionMatrix
             WorldViewMatrix
             NormalMatrix
+            ViewProjectionMatrix
+            ViewMatrix
         }
 
         Defines {
             DIFFUSEMAP_ALPHA : DiffuseMap
             NUM_BONES : NumberOfBones
+            INSTANCING : UseInstancing
         }
 
     }
@@ -297,11 +313,14 @@ MaterialDef Phong Lighting {
             WorldViewProjectionMatrix
             WorldViewMatrix
             NormalMatrix
+            ViewProjectionMatrix
+            ViewMatrix
         }
 
         Defines {
             DIFFUSEMAP_ALPHA : DiffuseMap
             NUM_BONES : NumberOfBones
+            INSTANCING : UseInstancing
         }
 
     }
@@ -343,6 +362,8 @@ MaterialDef Phong Lighting {
 
         WorldParameters {
             WorldViewProjectionMatrix
+            ViewProjectionMatrix
+            ViewMatrix
         }
 
         Defines {
@@ -351,6 +372,7 @@ MaterialDef Phong Lighting {
             HAS_GLOWCOLOR : GlowColor
 
             NUM_BONES : NumberOfBones
+            INSTANCING : UseInstancing
         }
     }
     
