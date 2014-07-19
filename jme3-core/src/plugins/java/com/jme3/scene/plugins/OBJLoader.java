@@ -45,6 +45,7 @@ import com.jme3.scene.mesh.IndexIntBuffer;
 import com.jme3.scene.mesh.IndexShortBuffer;
 import com.jme3.util.BufferUtils;
 import com.jme3.util.IntMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,7 +72,7 @@ public final class OBJLoader implements AssetLoader {
     protected final HashMap<String, ArrayList<Face>> matFaces = new HashMap<String, ArrayList<Face>>();
     
     protected String currentMatName;
-    protected String currentObjectName;
+    protected String currentGroupName;
 
     protected final HashMap<Vertex, Integer> vertIndexMap = new HashMap<Vertex, Integer>(100);
     protected final IntMap<Vertex> indexVertMap = new IntMap<Vertex>(100);
@@ -127,6 +128,7 @@ public final class OBJLoader implements AssetLoader {
     
     protected static class Face {
         Vertex[] verticies;
+        String groupName;
     }
     
     protected class ObjectGroup {
@@ -194,6 +196,8 @@ public final class OBJLoader implements AssetLoader {
         Face[] t = new Face[]{ new Face(), new Face() };
         t[0].verticies = new Vertex[3];
         t[1].verticies = new Vertex[3];
+        t[0].groupName = f.groupName;
+        t[1].groupName = f.groupName;
 
         Vertex v0 = f.verticies[0];
         Vertex v1 = f.verticies[1];
@@ -233,6 +237,7 @@ public final class OBJLoader implements AssetLoader {
 
     protected void readFace(){
         Face f = new Face();
+        f.groupName = currentGroupName;
         vertList.clear();
 
         String line = scan.nextLine().trim();
@@ -387,9 +392,12 @@ public final class OBJLoader implements AssetLoader {
             // specify MTL lib to use for this OBJ file
             String mtllib = scan.nextLine().trim();
             loadMtlLib(mtllib);
-        }else if (cmd.equals("s") || cmd.equals("g")){
+        }else if (cmd.equals("g")){
+            currentGroupName =  scan.next();
+            return true;
+        } else if ( cmd.equals("s") ) {
             return nextStatement();
-        }else{
+        } else{
             // skip entire command until next line
             logger.log(Level.WARNING, "Unknown statement in OBJ! {0}", cmd);
             return nextStatement();
@@ -398,14 +406,14 @@ public final class OBJLoader implements AssetLoader {
         return true;
     }
 
-    protected Geometry createGeometry(ArrayList<Face> faceList, String matName) throws IOException{
+    protected Geometry createGeometry(ArrayList<Face> faceList, String matName, String groupName) throws IOException{
         if (faceList.isEmpty())
             throw new IOException("No geometry data to generate mesh");
 
         // Create mesh from the faces
         Mesh mesh = constructMesh(faceList);
         
-        Geometry geom = new Geometry(objName + "-geom-" + (geomIndex++), mesh);
+        Geometry geom = new Geometry(groupName != null ? groupName : (objName + "-geom-" + (geomIndex++)), mesh);
         
         Material material = null;
         if (matName != null && matList != null){
@@ -585,14 +593,30 @@ public final class OBJLoader implements AssetLoader {
         if (matFaces.size() > 0){
             for (Entry<String, ArrayList<Face>> entry : matFaces.entrySet()){
                 ArrayList<Face> materialFaces = entry.getValue();
+                
                 if (materialFaces.size() > 0){
-                    Geometry geom = createGeometry(materialFaces, entry.getKey());
-                    objNode.attachChild(geom);
+                    ArrayList<Face> subFaces = new ArrayList<Face>();
+                    Set<String> groups = new HashSet<String>();
+                    for ( Face f : materialFaces ) {
+                        groups.add(f.groupName);
+                    }
+                    for ( String groupName : groups ) {
+                        subFaces.clear();
+                        for ( Face f : materialFaces ) {
+                            if ( Objects.equals(f.groupName, groupName) ) {
+                                subFaces.add(f);
+                            }
+                        }
+                        Geometry geom = createGeometry(subFaces, entry.getKey(), groupName);
+                        objNode.attachChild(geom);
+                    }
+                    
+                    
                 }
             }
         }else if (faces.size() > 0){
             // generate final geometry
-            Geometry geom = createGeometry(faces, null);
+            Geometry geom = createGeometry(faces, null, currentGroupName);
             objNode.attachChild(geom);
         }
 
