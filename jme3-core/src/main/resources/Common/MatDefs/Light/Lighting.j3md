@@ -133,8 +133,9 @@ MaterialDef Phong Lighting {
         Int NumberOfBones
         Matrix4Array BoneMatrices
         
-        Texture2D DiffLightBuf;
-        Texture2D SpecLightBuf;
+        Texture2D DiffLightBuf
+        Texture2D SpecLightBuf
+        Float Reflective : 0
     }
 
     Technique {
