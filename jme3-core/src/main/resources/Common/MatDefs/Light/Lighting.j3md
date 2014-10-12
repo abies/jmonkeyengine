@@ -134,8 +134,6 @@ MaterialDef Phong Lighting {
         Matrix4Array BoneMatrices
         Boolean UseInstancing
 
-        Texture2D DiffLightBuf
-        Texture2D SpecLightBuf
         Float Reflective : 0    
 	}
 
@@ -376,33 +374,12 @@ MaterialDef Phong Lighting {
         }
     }
     
-    Technique DLBasePass {
 
-        VertexShader GLSL100:   net/virtualmat/deferred/MeshBasePass.vert
-        FragmentShader GLSL100: net/virtualmat/deferred/MeshBasePass.frag
+	
+	Technique VDef {
 
-        WorldParameters {
-            WorldViewProjectionMatrix
-            WorldViewMatrix
-            NormalMatrix
-            WorldMatrix
-        }
-
-        Defines {
-            DIFFUSEMAP : DiffuseMap
-            NORMALMAP : NormalMap
-            PARALLAXMAP : ParallaxMap
-            NORMALMAP_PARALLAX : PackedNormalParallax
-            STEEP_PARALLAX : SteepParallax
-            ALPHAMAP : AlphaMap
-            DISCARD_ALPHA : AlphaDiscardThreshold
-        }
-    }
-    
-    Technique DLComposePass {
-
-        VertexShader GLSL100:   net/virtualmat/deferred/MeshComposePass.vert
-        FragmentShader GLSL150: net/virtualmat/deferred/MeshComposePass.frag
+        VertexShader GLSL100:   net/virtualmat/deferred/MeshPass.vert
+        FragmentShader GLSL150: net/virtualmat/deferred/MeshPass.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

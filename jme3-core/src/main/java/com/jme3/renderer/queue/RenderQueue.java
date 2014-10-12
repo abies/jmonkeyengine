@@ -56,6 +56,7 @@ public class RenderQueue {
      */
     public RenderQueue() {
     	this.buckets[Bucket.Deferred.ordinal()] = new GeometryList(new OpaqueComparator());
+    	this.buckets[Bucket.DeferredDecal.ordinal()] = new GeometryList(new OpaqueComparator());
     	this.buckets[Bucket.Opaque.ordinal()] = new GeometryList(new OpaqueComparator());
     	this.buckets[Bucket.Gui.ordinal()] = new GeometryList(new GuiComparator());
     	this.buckets[Bucket.Transparent.ordinal()] = new GeometryList(new TransparentComparator());
@@ -76,6 +77,7 @@ public class RenderQueue {
     public enum Bucket {
     	
     	Deferred,
+    	DeferredDecal,
     	
         /**
          * The renderer will try to find the optimal order for rendering all 
