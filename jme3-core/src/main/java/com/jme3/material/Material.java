@@ -45,6 +45,7 @@ import com.jme3.renderer.Caps;
 import com.jme3.renderer.GL1Renderer;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.Renderer;
+import com.jme3.renderer.RendererException;
 import com.jme3.renderer.queue.RenderQueue.Bucket;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
@@ -717,7 +718,11 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
             if (numInstances == 0) {
                 return;
             }
-            renderer.renderMesh(mesh, lodLevel, numInstances, instGeom.getAllInstanceData());
+            if (renderer.getCaps().contains(Caps.MeshInstancing)) {
+                renderer.renderMesh(mesh, lodLevel, numInstances, instGeom.getAllInstanceData());
+            } else {
+                throw new RendererException("Mesh instancing is not supported by the video hardware");
+            }
         } else {
             renderer.renderMesh(mesh, lodLevel, 1, null);
         }
@@ -736,12 +741,11 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
      * g_LightPosition.w is the inverse radius (1/r) of the light (for
      * attenuation) <br/> </p>
      */
-    protected void updateLightListUniforms(Shader shader, Geometry g, int numLights) {
+    protected void updateLightListUniforms(Shader shader, Geometry g, LightList lightList, int numLights) {
         if (numLights == 0) { // this shader does not do lighting, ignore.
             return;
         }
 
-        LightList lightList = g.getWorldLightList();
         Uniform lightColor = shader.getUniform("g_LightColor");
         Uniform lightPos = shader.getUniform("g_LightPosition");
         Uniform lightDir = shader.getUniform("g_LightDirection");
@@ -808,10 +812,9 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
         }
     }
 
-    protected void renderMultipassLighting(Shader shader, Geometry g, RenderManager rm) {
+    protected void renderMultipassLighting(Shader shader, Geometry g, LightList lightList, RenderManager rm) {
 
         Renderer r = rm.getRenderer();
-        LightList lightList = g.getWorldLightList();
         Uniform lightDir = shader.getUniform("g_LightDirection");
         Uniform lightColor = shader.getUniform("g_LightColor");
         Uniform lightPos = shader.getUniform("g_LightPosition");
@@ -1120,9 +1123,10 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
      * </ul>
      *
      * @param geom The geometry to render
+     * @param lights Presorted and filtered light list to use for rendering
      * @param rm The render manager requesting the rendering
      */
-    public void render(Geometry geom, RenderManager rm) {
+    public void render(Geometry geom, LightList lights, RenderManager rm) {
         autoSelectTechnique(rm);
 
         Renderer r = rm.getRenderer();
@@ -1130,7 +1134,7 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
         TechniqueDef techDef = technique.getDef();
 
         if (techDef.getLightMode() == LightMode.MultiPass
-                && geom.getWorldLightList().size() == 0) {
+                && lights.size() == 0) {
             return;
         }
 
@@ -1167,15 +1171,15 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
                 r.setLighting(null);
                 break;
             case SinglePass:
-                updateLightListUniforms(shader, geom, 4);
+                updateLightListUniforms(shader, geom, lights, 4);
                 break;
             case FixedPipeline:
-                r.setLighting(geom.getWorldLightList());
+                r.setLighting(lights);
                 break;
             case MultiPass:
                 // NOTE: Special case!
                 resetUniformsNotSetByCurrent(shader);
-                renderMultipassLighting(shader, geom, rm);
+                renderMultipassLighting(shader, geom, lights, rm);
                 // very important, notice the return statement!
                 return;
         }
@@ -1190,6 +1194,20 @@ public class Material implements CloneableSmartAsset, Cloneable, Savable {
         renderMeshFromGeometry(r, geom);
     }
 
+    /**
+     * Called by {@link RenderManager} to render the geometry by
+     * using this material.
+     * 
+     * Note that this version of the render method
+     * does not perform light filtering.
+     * 
+     * @param geom The geometry to render
+     * @param rm The render manager requesting the rendering
+     */
+    public void render(Geometry geom, RenderManager rm) {
+        render(geom, geom.getWorldLightList(), rm);
+    }
+    
     public void write(JmeExporter ex) throws IOException {
         OutputCapsule oc = ex.getCapsule(this);
         oc.write(def.getAssetName(), "material_def", null);
